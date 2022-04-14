@@ -1,15 +1,14 @@
 #!/usr/bin/bash
 
 mainMenu() {
-	printf '
-=========== THE ULTIMATE PP2000 ============
+cyanPrint "=========== THE ULTIMATE PP2000 ============"
 
-1) Run prelim
-2) Logs
-3) Troubleshooting
-4) Set time
-0) Exit
-Choose an option:  '
+printf "$(greenPrint '1)') Run prelim\n"
+printf "$(greenPrint '2)') Logs\n"
+printf "$(greenPrint '3)') Troubleshooting\n"
+printf "$(greenPrint '4)') Set time\n"
+printf "$(redPrint '0)') Exit\n"
+printf "Choose an option: "
 	read -r ans
 	case $ans in
 		1)
@@ -58,11 +57,11 @@ Choose an option:  '
 			mainMenu
 			;;
 		0)
-			printf "Bye bye."
+			printf "Bye bye.\n"
 			exit 0
 			;;
 		*)
-			printf "Wrong option."
+			printf "Wrong option.\n"
 			logMenu
 			;;
 
@@ -141,7 +140,25 @@ Choose an option:  '
 }
 
 setTime() {
-	printf 'Time is set\n'
+	greenprint "Time is set."
 	mainMenu
 }
+### Colors ##
+ESC=$(printf '\033')
+RESET="${ESC}[0m"
+RED="${ESC}[31m"
+GREEN="${ESC}[32m"
+YELLOW="${ESC}[33m"
+BLUE="${ESC}[34m"
+MAGENTA="${ESC}[35m"
+CYAN="${ESC}[36m"
+
+### Color Functions ##
+redPrint() { printf "${RED}%s${RESET}" "$1"; }
+greenPrint() { printf "${GREEN}%s${RESET}" "$1"; }
+yellowPrint() { printf "${YELLOW}%s${RESET}" "$1"; }
+bluePrint() { printf "${BLUE}%s${RESET}" "$1"; }
+magentaPrint() { printf "${MAGENTA}%s${RESET}" "$1"; }
+cyanPrint() { printf "${CYAN}%s${RESET}\n" "$1"; }
+
 mainMenu
