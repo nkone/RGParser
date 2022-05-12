@@ -51,12 +51,12 @@ headers = {
         'Content-Type': 'text/html',
         }
 
-def parse_time(start, end):
+def parse_time(start, end, rg_model):
     m, s = divmod(int(end - start), 60)
     h, m = divmod(m, 60)
     
-    bgw_210['Sync_Time'] = str(h).zfill(2) + ':' + str(m).zfill(2) + ':' + str(s).zfill(2)
-    #print(f'Get time: {h:d}:{m:02d}:{s:02d}')
+    rg_model['Sync_Time'] = str(h).zfill(2) + ':' + str(m).zfill(2) + ':' + str(s).zfill(2)
+    print(f'Get time: {h:d}:{m:02d}:{s:02d}')
 
 def dict_to_csv(rg_dict):
     desire_path = '/home/odroid/Desktop/Output'
@@ -73,36 +73,19 @@ def dict_to_csv(rg_dict):
     except IOError:
         print("I/O error")
 
-def print_bgw_210():
-    del bgw_210['home_url']
-    del bgw_210['login_url']
-    del bgw_210['sys_url']
-    del bgw_210['voice_url']
-    del bgw_210['lanstats_url']
+def print_rg(rg_model):
+    del rg_model['home_url']
+    del rg_model['login_url']
+    del rg_model['sys_url']
+    del rg_model['voice_url']
+    del rg_model['lanstats_url']
     #for value in bgw_210:
     #    print(value, ':', bgw_210[value])
-    print("SSID: ", bgw_210['2.4ghz_SSID'])
-    print("Time: ", bgw_210['Sync_Time'])
+    print("SSID: ", rg_model['2.4ghz_SSID'])
+    print("Time: ", rg_model['Sync_Time'])
 
-def bgw_210_post():
-    s = requests.Session()
-    res = s.get(bgw_210['login_url'], headers=headers)
-    cookies = dict(res.cookies)
-    headers['Content-Type']= 'application/x-www-form-urlencoded'
-    res = s.post(bgw_210['login_url'], headers=headers, cookies=cookies)
-    html = res.text
-    soup = BeautifulSoup(html,'html.parser')
-    print(soup.find('input', {"name":"nonce"}).attrs['value'])
-    payload = {
-            'nonce': '',
-            'password': '/613@8@%&0',
-            #'password': '**********',
-            'hashpassword': '',
-            'Continue': 'Continue',
-            }
-    #r = requests.post(bgw_210['login_url'], headers=headers, cookies=cookies)
 
-def bgw_210_get():
+def parse_bgw_210():
     start_time = time.time()
     retry = 1
     while True:
@@ -114,12 +97,12 @@ def bgw_210_get():
         except:
             retry += 1
             if retry >= 30:
-                break
+                print("Time limit exceeded")
+                return
             time.sleep(5)
     end_time = time.time()
-    parse_time(start_time, end_time)
+    parse_time(start_time, end_time, bgw_210)
     # Get SSID
-    response = requests.get(bgw_210['home_url'], headers=headers)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
     label_container = soup.find_all(text='Network Name (SSID)')
@@ -155,34 +138,29 @@ def bgw_210_get():
     response = requests.get(bgw_210['lanstats_url'], headers = headers)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    lan_container = soup.find_all('tr')
+    lan_container = soup.find_all('table')
 
-    # Checks for ipv6 if available
-    ipv6_container = lan_container[17].findChildren('td')
-    idx = 26
-    if ipv6_container[0].text == 'Available':
-        idx += 7; #offset down 7 lines
-    
-    wifi_mode = lan_container[idx].findChildren('td')
+    wifi_table = lan_container[4].findChildren('tr')
+    wifi_mode = wifi_table[2].findChildren('td')
     bgw_210['2.4ghz_Mode'] = wifi_mode[1].text
     bgw_210['5ghz_Mode'] = wifi_mode[2].text
 
-    wifi_bandwidth = lan_container[idx+1].findChildren('td')
+    wifi_bandwidth = wifi_table[3].findChildren('td')
     bgw_210['2.4ghz_Bandwidth'] = wifi_bandwidth[1].text
     bgw_210['5ghz_Bandwidth'] = wifi_bandwidth[2].text
 
-    wifi_curr_bandwidth = lan_container[idx+2].findChildren('td')
+
+    wifi_curr_bandwidth = wifi_table[4].findChildren('td')
     bgw_210['2.4ghz_Current_Bandwidth'] = wifi_curr_bandwidth[1].text
     bgw_210['5ghz_Current_Bandwidth'] = wifi_curr_bandwidth[2].text
 
-    wifi_ch = lan_container[idx+3].findChildren('td')
+    wifi_ch = wifi_table[5].findChildren('td')
     bgw_210['2.4ghz_Current_Radio_Channel'] = wifi_ch[1].text
     bgw_210['5ghz_Current_Radio_Channel'] = wifi_ch[2].text
 
 def main():
-    bgw_210_get()
-    print_bgw_210()
-    dict_to_csv(bgw_210)
+    parse_bgw_210()
+    dict_to_csv(bgw210)
 
 if __name__ == "__main__":
     main()
