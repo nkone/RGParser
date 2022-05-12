@@ -113,9 +113,10 @@ def print_rg(rg_model):
     del rg_model['sys_url']
     del rg_model['voice_url']
     del rg_model['lanstats_url']
-    for value in rg_model:
-        print(value, ':', rg_model[value])
+    #for value in rg_model:
+    #    print(value, ':', rg_model[value])
     print("SSID: ", rg_model['2.4ghz_SSID'])
+    print("Serial: ", rg_model['Serial_Number'])
     print("Time: ", rg_model['Sync_Time'])
 
 
@@ -168,29 +169,42 @@ def parse_bgw_210():
     bgw_210['Phone_Line_1'] = phone_number[1].text
     bgw_210['Phone_Line_2'] = phone_number[2].text
 
+    # Wait for 5ghz to boot up
+    #time.sleep(120)
+
     # Get lan stats (wifi channel)
     response = requests.get(bgw_210['lanstats_url'], headers = headers)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    lan_container = soup.find_all('table')
 
-    wifi_table = lan_container[4].findChildren('tr')
-    wifi_mode = wifi_table[2].findChildren('td')
-    bgw_210['2.4ghz_Mode'] = wifi_mode[1].text
-    bgw_210['5ghz_Mode'] = wifi_mode[2].text
+    try:
+        wifi_mode = soup.find("td", text="Mode").find_next_siblings('td')
+        bgw_210['2.4ghz_Mode'] = wifi_mode[0].text
+        bgw_210['5ghz_Mode'] = wifi_mode[1].text
+    except:
+        print("No wifi mode element")
 
-    wifi_bandwidth = wifi_table[3].findChildren('td')
-    bgw_210['2.4ghz_Bandwidth'] = wifi_bandwidth[1].text
-    bgw_210['5ghz_Bandwidth'] = wifi_bandwidth[2].text
+    try:
+        wifi_bandwidth = soup.find("td", text="Bandwidth").find_next_siblings('td')
+        bgw_210['2.4ghz_Bandwidth'] = wifi_bandwidth[0].text
+        bgw_210['5ghz_Bandwidth'] = wifi_bandwidth[1].text
+    except:
+        print("No bandwidth element")
 
+    try:
+        wifi_curr_bandwidth = soup.find("td", text="Current Bandwidth").find_next_siblings('td')
+        bgw_210['2.4ghz_Current_Bandwidth'] = wifi_curr_bandwidth[0].text
+        bgw_210['5ghz_Current_Bandwidth'] = wifi_curr_bandwidth[1].text
+    except:
+        print("No current bandwidth element")
 
-    wifi_curr_bandwidth = wifi_table[4].findChildren('td')
-    bgw_210['2.4ghz_Current_Bandwidth'] = wifi_curr_bandwidth[1].text
-    bgw_210['5ghz_Current_Bandwidth'] = wifi_curr_bandwidth[2].text
-
-    wifi_ch = wifi_table[5].findChildren('td')
-    bgw_210['2.4ghz_Current_Radio_Channel'] = wifi_ch[1].text
-    bgw_210['5ghz_Current_Radio_Channel'] = wifi_ch[2].text
+    try:
+        wifi_ch = soup.find("td", text="Current Radio Channel").find_next_siblings('td')
+        bgw_210['2.4ghz_Current_Radio_Channel'] = wifi_ch[0].text
+        bgw_210['5ghz_Current_Radio_Channel'] = wifi_ch[1].text
+    except:
+        print("No current radio element")
+    print_rg(bgw_210)
     dict_to_csv(bgw_210)
 
 def parse_bgw_320():
@@ -241,34 +255,47 @@ def parse_bgw_320():
     bgw_320['Phone_Line_1'] = phone_number[1].text
     bgw_320['Phone_Line_2'] = phone_number[2].text
 
+    # Wait for 5ghz to boot up
+    time.sleep(120)
+
     # Get lan stats (wifi channel)
     response = requests.get(bgw_320['lanstats_url'], headers = headers)
     html = response.text
     soup = BeautifulSoup(html, 'html.parser')
-    lan_container = soup.find_all('table')
 
-    wifi_table = lan_container[4].findChildren('tr')
-    wifi_mode = wifi_table[2].findChildren('td')
-    bgw_320['2.4ghz_Mode'] = wifi_mode[1].text
-    bgw_320['5ghz_Mode'] = wifi_mode[2].text
+    try:
+        wifi_mode = soup.find("td", text="Mode").find_next_siblings('td')
+        bgw_320['2.4ghz_Mode'] = wifi_mode[0].text
+        bgw_320['5ghz_Mode'] = wifi_mode[1].text
+    except:
+        print("No wifi mode element")
 
-    wifi_bandwidth = wifi_table[3].findChildren('td')
-    bgw_320['2.4ghz_Bandwidth'] = wifi_bandwidth[1].text
-    bgw_320['5ghz_Bandwidth'] = wifi_bandwidth[2].text
+    try:
+        wifi_bandwidth = soup.find("td", text="Bandwidth").find_next_siblings('td')
+        bgw_320['2.4ghz_Bandwidth'] = wifi_bandwidth[0].text
+        bgw_320['5ghz_Bandwidth'] = wifi_bandwidth[1].text
+    except:
+        print("No bandwidth element")
 
+    try:
+        wifi_curr_bandwidth = soup.find("td", text="Current Bandwidth").find_next_siblings('td')
+        bgw_320['2.4ghz_Current_Bandwidth'] = wifi_curr_bandwidth[0].text
+        bgw_320['5ghz_Current_Bandwidth'] = wifi_curr_bandwidth[1].text
+    except:
+        print("No current bandwidth element")
 
-    wifi_curr_bandwidth = wifi_table[4].findChildren('td')
-    bgw_320['2.4ghz_Current_Bandwidth'] = wifi_curr_bandwidth[1].text
-    bgw_320['5ghz_Current_Bandwidth'] = wifi_curr_bandwidth[2].text
-
-    wifi_ch = wifi_table[5].findChildren('td')
-    bgw_320['2.4ghz_Current_Radio_Channel'] = wifi_ch[1].text
-    bgw_320['5ghz_Current_Radio_Channel'] = wifi_ch[2].text
+    try:
+        wifi_ch = soup.find("td", text="Current Radio Channel").find_next_siblings('td')
+        bgw_320['2.4ghz_Current_Radio_Channel'] = wifi_ch[0].text
+        bgw_320['5ghz_Current_Radio_Channel'] = wifi_ch[1].text
+    except:
+        print("No current radio element")
     #dict_to_csv(bgw_320)
-    #print_rg(bgw_320)
+    print_rg(bgw_320)
 
 def usage():
-    print("parser.py [Model]")
+    print("Usage: parser.py [Model]")
+    print("Support model: bgw210, bgw320")
 
 def main():
     if (len(sys.argv) != 2):
